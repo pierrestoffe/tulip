@@ -1,0 +1,11 @@
+name: tulip
+
+services:
+  dev:
+    build:
+      context: ../../
+      dockerfile: build/dev/Dockerfile
+    container_name: tulip_dev
+    volumes:
+      - ../../:/app
+    restart: unless-stopped
