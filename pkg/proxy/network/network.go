@@ -17,7 +17,7 @@ func isRunning() bool {
 
 func Start() error {
     if isRunning() {
-        log.PrintWarning("Proxy network " + constants.ProxyNetworkName + " is already running.")
+        log.PrintWarning("Proxy network " + constants.ProxyNetworkName + " is running already.")
         return nil
     }
 
@@ -26,13 +26,13 @@ func Start() error {
     if err := cmd.Run(); err != nil {
         helpers.HandleError("error starting " + constants.ProxyNetworkName + " proxy network", err)
     }
-    log.PrintSuccess("Proxy network " + constants.ProxyNetworkName + " is running.")
+    log.PrintSuccessReplace("Proxy network " + constants.ProxyNetworkName + " started.")
     return nil
 }
 
 func Stop() error {
     if !isRunning() {
-        log.PrintWarning("Proxy network " + constants.ProxyNetworkName + " is already stopped.")
+        log.PrintWarning("Proxy network " + constants.ProxyNetworkName + " was stopped already.")
         return nil
     }
 
@@ -42,6 +42,6 @@ func Stop() error {
     if err := cmd.Run(); err != nil {
         helpers.HandleError("error stopping " + constants.ProxyNetworkName + " proxy network", err)
     }
-    log.PrintSuccess("Proxy network " + constants.ProxyNetworkName + " is stopped.")
+    log.PrintSuccessReplace("Proxy network " + constants.ProxyNetworkName + " was stopped.")
     return nil
 }

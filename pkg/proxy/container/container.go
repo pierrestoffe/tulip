@@ -20,7 +20,7 @@ func isRunning() bool {
 
 func Start() error {
     if isRunning() {
-        log.PrintWarning("Proxy " + constants.ProxyContainerName + " is already running.")
+        log.PrintWarning("Proxy " + constants.ProxyContainerName + " is running already.")
         log.PrintInfo("You can access the dashboard at " + constants.ProxyUrl)
         return nil
     }
@@ -37,14 +37,14 @@ func Start() error {
     if err := cmd.Run(); err != nil {
         helpers.HandleError("error starting " + constants.ProxyContainerName + " proxy", err)
     }
-    log.PrintSuccess("Proxy " + constants.ProxyContainerName + " is running.")
+    log.PrintSuccessReplace("Proxy " + constants.ProxyContainerName + " started.")
     log.PrintInfo("You can access the dashboard at " + constants.ProxyUrl)
     return nil
 }
 
 func Stop() error {
     if !isRunning() {
-        log.PrintWarning("Proxy " + constants.ProxyContainerName + " is already stopped.")
+        log.PrintWarning("Proxy " + constants.ProxyContainerName + " was stopped already.")
         return nil
     }
 
@@ -60,6 +60,6 @@ func Stop() error {
     if err := cmd.Run(); err != nil {
         helpers.HandleError("error stopping " + constants.ProxyContainerName + " proxy", err)
     }
-    log.PrintSuccess("Proxy " + constants.ProxyContainerName + " is stopped.")
+    log.PrintSuccessReplace("Proxy " + constants.ProxyContainerName + " was stopped.")
     return nil
 }

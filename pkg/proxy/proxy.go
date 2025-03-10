@@ -18,3 +18,8 @@ func Stop() error {
     }
     return proxyNetwork.Stop()
 }
+
+func Restart() {
+    Stop()
+    Start()
+}

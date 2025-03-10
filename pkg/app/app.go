@@ -1,4 +1,4 @@
-package initialize
+package app
 
 import (
     "fmt"
@@ -7,47 +7,44 @@ import (
     "github.com/pierrestoffe/tulip/pkg/util/log"
     "github.com/pierrestoffe/tulip/pkg/util/helpers"
     "github.com/pierrestoffe/tulip/pkg/constants"
+    "github.com/pierrestoffe/tulip/pkg/proxy"
     proxyFiles "github.com/pierrestoffe/tulip/pkg/proxy/files"
 )
 
-const (
-    version = "1.0.0"
-    tulipHome = ".tulip"
-    tulipTemplates = ".tulip/templates"
-    traefikDir = ".tulip/traefik"
-    configFile = ".tulip/config.yml"
-)
-
-func InitTulip() {
+func Initialize() {
     homeDir, err := os.UserHomeDir()
     if err != nil {
         helpers.HandleError("error getting home directory: ", err)
         return
     }
 
-    tulipHomePath := filepath.Join(homeDir, tulipHome)
+    tulipHomePath := filepath.Join(homeDir, constants.AppRootDir)
 
-    if err := helpers.VerifyDir(tulipHomePath); err == nil {
+    if err := helpers.EnsureDir(tulipHomePath); err == nil {
         log.PrintWarning("Tulip is already initialized at " + tulipHomePath)
         log.PrintWarning("Do you want to reinitialize? This will overwrite existing configuration. (y/N)")
 
         var confirm string
         fmt.Scanln(&confirm)
         if confirm != "y" && confirm != "Y" {
-            log.PrintSuccess("You can use 'tulip start' to start Tulip's proxy.")
+            log.PrintEmpty()
+            proxy.Start()
             return
         }
     }
 
-    fmt.Println("\nInitializing Tulip...")
+    log.PrintEmpty()
+    log.PrintInfo("Initializing Tulip...")
 
     if err := helpers.CreateDir(filepath.Join(tulipHomePath, constants.AppConfigDir), 0755); err != nil {
-        fmt.Println("Error creating directory structure:", err)
+        helpers.HandleError("Error creating directory structure:", err)
         return
     }
 
     proxyFiles.ExtractConfigFiles()
 
     log.PrintSuccess("Tulip initialized successfully!")
-    log.PrintSuccess("You can now use 'tulip start' to start Tulip's proxy.")
+    log.PrintEmpty()
+
+    proxy.Start()
 }

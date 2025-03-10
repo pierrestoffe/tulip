@@ -13,4 +13,6 @@ const (
     ProxyContainerName = "tulip_proxy"
     ProxyUrl           = "http://localhost:8855"
 	ProxyConfigDir     = "proxy"
+	ProxyDockerFile    = "docker-compose.yml"
+	ProxyTraefikFile   = "traefik.yml"
 )

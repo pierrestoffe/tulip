@@ -64,13 +64,13 @@ func ExtractConfigFiles() error {
     }
 
     // Create docker-compose.yml
-    dockerComposePath := filepath.Join(proxyConfigDir, "docker-compose.yml")
+    dockerComposePath := filepath.Join(proxyConfigDir, constants.ProxyDockerFile)
     if err := createFileFromTemplate(dockerComposePath, dockerComposeTemplate, tulipDir); err != nil {
         return err
     }
 
     // Create traefik.yml
-    traefikPath := filepath.Join(proxyConfigDir, "traefik.yml")
+    traefikPath := filepath.Join(proxyConfigDir, constants.ProxyTraefikFile)
     if err := createFileFromTemplate(traefikPath, traefikTemplate, tulipDir); err != nil {
         return err
     }

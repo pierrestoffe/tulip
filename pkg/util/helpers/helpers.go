@@ -24,17 +24,10 @@ func GetProxyConfigDir() (string, error) {
     return filepath.Join(tulipDir, constants.AppConfigDir, constants.ProxyConfigDir), nil
 }
 
-func HandleError(message string, errMessage error) (error) {
+func HandleError(message string, errMessage error) error {
 	err := fmt.Errorf(message, errMessage)
 	log.PrintError(message + ": " + errMessage.Error())
 	return err
-}
-
-func VerifyDir(dirPath string) error {
-    if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-        return fmt.Errorf("directory does not exist: %s", dirPath)
-    }
-    return nil
 }
 
 func CreateDir(dirPath string, perm os.FileMode) error {
@@ -42,6 +35,13 @@ func CreateDir(dirPath string, perm os.FileMode) error {
         if err := os.MkdirAll(dirPath, perm); err != nil {
             return err
         }
+    }
+    return nil
+}
+
+func EnsureDir(dirPath string) error {
+    if _, err := os.Stat(dirPath); os.IsNotExist(err) {
+        return fmt.Errorf("directory does not exist: %s", dirPath)
     }
     return nil
 }

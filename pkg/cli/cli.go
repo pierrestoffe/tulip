@@ -1,16 +1,16 @@
 package cli
 
 import (
-    "fmt"
     "os"
-	"github.com/pierrestoffe/tulip/pkg/initialize"
+	"github.com/pierrestoffe/tulip/pkg/app"
 	"github.com/pierrestoffe/tulip/pkg/proxy"
+	"github.com/pierrestoffe/tulip/pkg/util/log"
 )
 
 func Execute() error {
     if len(os.Args) < 2 {
-        fmt.Println("Usage: tulip <command> [options]")
-		fmt.Println("Run 'tulip help' for usage information.")
+        log.PrintInfo("Usage: tulip <command> [options]")
+		log.PrintInfo("Run 'tulip help' for usage information.")
         os.Exit(1)
     }
 
@@ -18,25 +18,29 @@ func Execute() error {
     args := os.Args[2:]
 
     switch command {
+    case "help":
+        log.PrintInfo("to do")
     case "init":
-        initialize.InitTulip()
+        app.Initialize()
     case "proxy":
-        help := "Usage: tulip proxy {start|stop}"
+        help := "Usage: tulip proxy {start|stop|restart}"
         if len(args) == 0 {
-            fmt.Println(help)
+            log.PrintInfo(help)
             os.Exit(1)
         } else {
             switch args[0] {
             case "help":
-                fmt.Println(help)
+                log.PrintInfo(help)
                 os.Exit(1)
             case "start":
                 proxy.Start()
             case "stop":
                 proxy.Stop()
+            case "restart":
+                proxy.Restart()
             default:
-                fmt.Printf("Error: Unknown command '%s'\n", args[0])
-                fmt.Println(help)
+                log.PrintError("Error: Unknown command "+ args[0])
+                log.PrintInfo(help)
                 os.Exit(1)
             }
         }
@@ -161,8 +165,8 @@ func Execute() error {
     //     fmt.Println("  tulip db export backup.sql      Export the database")
     //     fmt.Println("  tulip logs web                  View logs for the web container")
     default:
-        fmt.Println("Error: Unknown command '", command, "'")
-        fmt.Println("Run 'tulip help' for usage information.")
+        log.PrintError("Error: Unknown command "+ command)
+        log.PrintInfo("Run 'tulip help' for usage information.")
         os.Exit(1)
     }
 
