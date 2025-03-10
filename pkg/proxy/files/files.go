@@ -6,9 +6,10 @@ import (
     "text/template"
     "github.com/pierrestoffe/tulip/pkg/constants"
     "github.com/pierrestoffe/tulip/pkg/util/helpers"
-    "github.com/pierrestoffe/tulip/pkg/util/log"
+    "github.com/pierrestoffe/tulip/pkg/util/print"
 )
 
+// Contains the template for the Docker Compose configuration
 const dockerComposeTemplate = `name: tulip
 
 services:
@@ -30,7 +31,7 @@ networks:
   tulip:
     external: true`
 
-
+// Contains the template for the Traefik configuration
 const traefikTemplate = `api:
   dashboard: true
   insecure: true
@@ -50,54 +51,60 @@ providers:
 log:
   level: "INFO"`
 
-func ExtractConfigFiles() error {
+// Creates the necessary configuration files for the proxy
+// It generates both Docker Compose and Traefik configuration files
+func AddConfigFiles() error {
+    // Get Tulip's home directory
     tulipDir, err := helpers.GetTulipDir()
     if err != nil {
-        helpers.HandleError("failed to get tulip directory: ", err)
+        return helpers.HandleError("failed to get tulip directory: ", err)
     }
 
+    // Construct the path to Tulip's proxy directory
     proxyConfigDir := filepath.Join(tulipDir, constants.AppConfigDir, constants.ProxyConfigDir)
 
     // Create proxy directory if it doesn't exist
     if err := os.MkdirAll(proxyConfigDir, 0755); err != nil {
-        helpers.HandleError("failed to create proxy directory: ", err)
+        return helpers.HandleError("failed to create proxy directory: ", err)
     }
 
     // Create docker-compose.yml
     dockerComposePath := filepath.Join(proxyConfigDir, constants.ProxyDockerFile)
-    if err := createFileFromTemplate(dockerComposePath, dockerComposeTemplate, tulipDir); err != nil {
+    if err := createFileFromTemplate(dockerComposePath, dockerComposeTemplate); err != nil {
         return err
     }
 
     // Create traefik.yml
     traefikPath := filepath.Join(proxyConfigDir, constants.ProxyTraefikFile)
-    if err := createFileFromTemplate(traefikPath, traefikTemplate, tulipDir); err != nil {
+    if err := createFileFromTemplate(traefikPath, traefikTemplate); err != nil {
         return err
     }
 
     return nil
 }
 
-func createFileFromTemplate(destPath, templateContent, tulipDir string) error {
+// Generates a file at the specified path using the provided template
+// It parses the template, creates the file, and writes the processed template content
+func createFileFromTemplate(destPath string, templateContent string) error {
     // Process file as template
     tmpl, err := template.New(filepath.Base(destPath)).Parse(templateContent)
     if err != nil {
-        helpers.HandleError("failed to parse template for " + destPath, err)
+        return helpers.HandleError("failed to parse template for " + destPath, err)
     }
 
     // Create destination file
     f, err := os.Create(destPath)
     if err != nil {
-        helpers.HandleError("failed to create file " + destPath, err)
+        return helpers.HandleError("failed to create file " + destPath, err)
     }
     defer f.Close()
 
     // Add content to destination file
     err = tmpl.Execute(f, map[string]string{})
     if err != nil {
-        helpers.HandleError("failed to add content to destination file " + destPath, err)
+        return helpers.HandleError("failed to add content to destination file " + destPath, err)
     }
 
-    log.PrintInfo("Created " + destPath)
+    print.Info("Created " + destPath)
     return nil
 }
