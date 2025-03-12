@@ -27,9 +27,18 @@ func GetProxyConfigDir() (string, error) {
 }
 
 // Logs an error and returns a formatted error
-func HandleError(message string, err error) error {
-    formattedErr := fmt.Errorf("%s: %w", message, err)
-    print.Error(message + ": " + err.Error())
+func HandleError(message string, err error, additionalContext ...string) error {
+    var formattedErr error
+
+    if len(additionalContext) > 0 && additionalContext[0] != "" {
+        // Format with additional context (like stderr output)
+        formattedErr = fmt.Errorf("%s: %w\n%s", message, err, additionalContext[0])
+        print.Error(message + ": " + err.Error() + "\n" + additionalContext[0])
+    } else {
+        formattedErr = fmt.Errorf("%s: %w", message, err)
+        print.Error(message + ": " + err.Error())
+    }
+
     return formattedErr
 }
 

@@ -1,6 +1,8 @@
 package container
 
 import (
+    "bytes"
+    "os"
     "os/exec"
     "strings"
     "github.com/pierrestoffe/tulip/pkg/constants"
@@ -16,7 +18,6 @@ func isRunning() bool {
     if err != nil {
         return false
     }
-
     return len(strings.TrimSpace(string(output))) > 0
 }
 
@@ -41,9 +42,19 @@ func Start() error {
     // Start the proxy container
     cmd := exec.Command("docker", "compose", "up", "-d")
     cmd.Dir = proxyConfigDir
+    cmd.Env = os.Environ()
+    cmd.Env = append(cmd.Env, "COMPOSE_IGNORE_ORPHANS=1")
+
+    // Capture stderr
+    var stderr bytes.Buffer
+    cmd.Stderr = &stderr
+
+    // Run command and handle errors
     if err := cmd.Run(); err != nil {
-        return helpers.HandleError("error starting " + constants.ProxyContainerName + " proxy", err)
+        errMsg := stderr.String()
+        return helpers.HandleError("error starting " + constants.ProxyContainerName + " proxy: ", err, errMsg)
     }
+
     print.SuccessReplace("Proxy " + constants.ProxyContainerName + " started.")
     print.Info("You can access the dashboard at " + constants.ProxyUrl)
     return nil
@@ -69,9 +80,28 @@ func Stop() error {
     // Stop the proxy container
     cmd := exec.Command("docker", "compose", "down")
     cmd.Dir = proxyConfigDir
+    cmd.Env = os.Environ()
+    cmd.Env = append(cmd.Env, "COMPOSE_IGNORE_ORPHANS=1")
+
+    // Capture stderr
+    var stderr bytes.Buffer
+    cmd.Stderr = &stderr
+
+    // Run command and handle errors
     if err := cmd.Run(); err != nil {
-        return helpers.HandleError("error stopping " + constants.ProxyContainerName + " proxy", err)
+        errMsg := stderr.String()
+        return helpers.HandleError("error stopping " + constants.ProxyContainerName + " proxy: ", err, errMsg)
     }
+
     print.SuccessReplace("Proxy " + constants.ProxyContainerName + " was stopped.")
     return nil
+}
+
+// Ensure checks if the proxy container is running and starts it if it's not
+// Returns nil if the container is already running or was started successfully
+func Ensure() error {
+    if isRunning() {
+        return nil
+    }
+    return Start()
 }

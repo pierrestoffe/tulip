@@ -22,8 +22,6 @@ func Initialize() {
         helpers.HandleError("error getting home directory: ", err)
         return
     }
-
-    // Construct the path to Tulip's home directory
     tulipHomePath := filepath.Join(homeDir, constants.AppRootDir)
 
     // Check if Tulip is already initialized

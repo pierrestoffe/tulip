@@ -79,7 +79,6 @@ func AddConfigFiles() error {
     if err := createFileFromTemplate(traefikPath, traefikTemplate); err != nil {
         return err
     }
-
     return nil
 }
 
