@@ -1,83 +1,104 @@
-package container
+// Package network provides functionality for managing the Docker network used by Tulip's proxy
+package network
 
 import (
-    "bytes"
-    "os/exec"
-    "github.com/pierrestoffe/tulip/pkg/constants"
-    "github.com/pierrestoffe/tulip/pkg/util/helpers"
-    "github.com/pierrestoffe/tulip/pkg/util/print"
+	"bytes"
+	"os/exec"
+
+	"github.com/pierrestoffe/tulip/pkg/config"
+	"github.com/pierrestoffe/tulip/pkg/util"
 )
 
-// Checks if the Docker proxy network exists
-// Returns true if the network exists, false otherwise
-func isRunning() bool {
-    cmd := exec.Command("docker", "network", "inspect", constants.ProxyNetworkName)
-    if err := cmd.Run(); err != nil {
-        return false
-    }
-    return true
+// Start creates and initializes a new Docker network for the proxy if one doesn't exist
+// Returns true if a new network was created, false if it already existed, and any error that occurred
+func Start() (bool, error) {
+	// Get configuration
+	cfg, err := config.Get()
+	if err != nil {
+		return false, util.HandleError("Failed to load configuration", err)
+	}
+
+	// Check if the proxy network is already running
+	if IsRunning() {
+		util.PrintWarning("Proxy network " + cfg.Docker.NetworkName + " is already running")
+		return false, nil
+	}
+
+	// Start the proxy network
+	util.PrintInfo("Starting " + cfg.Docker.NetworkName + " proxy network..")
+	cmd := exec.Command("docker", "network", "create", cfg.Docker.NetworkName)
+
+	// Capture stderr
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	// Run command and handle errors
+	if err := cmd.Run(); err != nil {
+		errMsg := stderr.String()
+		return false, util.HandleError("Error starting "+cfg.Docker.NetworkName+" proxy network", err, errMsg)
+	}
+
+	util.PrintInfoReplace("Proxy network " + cfg.Docker.NetworkName + " started")
+	return true, nil
 }
 
-// Creates the Docker proxy network if it doesn't already exist
-// Returns nil if the network already exists or was created successfully
-func Start() error {
-    // Check if the proxy network is already running
-    if isRunning() {
-        print.Warning("Proxy network " + constants.ProxyNetworkName + " is running already.")
-        return nil
-    }
+// Stop removes the Docker proxy network
+// Returns true if the network was stopped, false if it wasn't running, and any error that occurred
+func Stop() (bool, error) {
+	// Get configuration
+	cfg, err := config.Get()
+	if err != nil {
+		return false, util.HandleError("Failed to load configuration", err)
+	}
 
-    // Start the proxy network
-    print.Info("Starting " + constants.ProxyNetworkName + " proxy network...")
-    cmd := exec.Command("docker", "network", "create", constants.ProxyNetworkName)
+	// Check if the proxy network is running
+	if !IsRunning() {
+		util.PrintWarning("Proxy network " + cfg.Docker.NetworkName + " is already stopped.")
+		return false, nil
+	}
 
-    // Capture stderr
-    var stderr bytes.Buffer
-    cmd.Stderr = &stderr
+	util.PrintInfo("Stopping " + cfg.Docker.NetworkName + " network..")
 
-    // Run command and handle errors
-    if err := cmd.Run(); err != nil {
-        errMsg := stderr.String()
-        return helpers.HandleError("error starting " + constants.ProxyNetworkName + " proxy network: ", err, errMsg)
-    }
+	// Stop the proxy network
+	cmd := exec.Command("docker", "network", "remove", cfg.Docker.NetworkName)
 
-    print.SuccessReplace("Proxy network " + constants.ProxyNetworkName + " started.")
-    return nil
+	// Capture stderr
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	// Run command and handle errors
+	if err := cmd.Run(); err != nil {
+		errMsg := stderr.String()
+		return false, util.HandleError("Error stopping "+cfg.Docker.NetworkName+" proxy network", err, errMsg)
+	}
+
+	util.PrintInfoReplace("Proxy network " + cfg.Docker.NetworkName + " was stopped")
+	return true, nil
 }
 
-// Removes the Docker proxy network if it exists
-// Returns nil if the network doesn't exist or was removed successfully
-func Stop() error {
-    // Check if the proxy network is running
-    if !isRunning() {
-        print.Warning("Proxy network " + constants.ProxyNetworkName + " was stopped already.")
-        return nil
-    }
-
-    print.Info("Stopping " + constants.ProxyNetworkName + " network...")
-
-    // Stop the proxy network
-    cmd := exec.Command("docker", "network", "remove", constants.ProxyNetworkName)
-
-    // Capture stderr
-    var stderr bytes.Buffer
-    cmd.Stderr = &stderr
-
-    // Run command and handle errors
-    if err := cmd.Run(); err != nil {
-        errMsg := stderr.String()
-        return helpers.HandleError("error stopping " + constants.ProxyNetworkName + " proxy network", err, errMsg)
-    }
-
-    print.SuccessReplace("Proxy network " + constants.ProxyNetworkName + " was stopped.")
-    return nil
-}
-
-// Ensure checks if the proxy network is running and starts it if it's not
-// Returns nil if the network is already running or was started successfully
+// Ensure verifies that the proxy network exists and creates it if missing
+// Returns an error if the network cannot be created
 func Ensure() error {
-    if isRunning() {
-        return nil
-    }
-    return Start()
+	if IsRunning() {
+		return nil
+	}
+	_, err := Start()
+	return err
+}
+
+// IsRunning checks if the proxy network exists in Docker
+// Returns true if the network exists and is operational
+func IsRunning() bool {
+	// Get configuration
+	cfg, err := config.Get()
+	if err != nil {
+		util.HandleError("Failed to load configuration", err)
+		return false
+	}
+
+	cmd := exec.Command("docker", "network", "inspect", cfg.Docker.NetworkName)
+	if err := cmd.Run(); err != nil {
+		return false
+	}
+	return true
 }
